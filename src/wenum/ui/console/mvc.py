@@ -414,10 +414,10 @@ class View:
                                     style="orange3" if color else "deep_pink3")
                 color = not color
 
-            self.console.rule(f"[dim]Response number {fuzz_result.result_number}:[/dim]", style="dim green")
+            self.console.rule(f"[dim]Response number {fuzz_result.result_id}:[/dim]", style="dim green")
             self.console.print(grid, plugin_grid, soft_wrap=True)
         else:
-            self.console.rule(f"[dim]Response number {fuzz_result.result_number}:[/dim]", style="dim green")
+            self.console.rule(f"[dim]Response number {fuzz_result.result_id}:[/dim]", style="dim green")
             self.console.print(grid, soft_wrap=True)
 
         # Add exception information

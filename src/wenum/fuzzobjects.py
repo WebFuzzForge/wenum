@@ -321,7 +321,7 @@ class FuzzResult(FuzzItem):
 
         self.exception = exception
         self.rlevel_desc: str = ""
-        self.result_number: int = next(FuzzResult.newid)
+        self.result_id: int = next(FuzzResult.newid)
 
         self.chars: int = 0
         self.lines: int = 0
@@ -368,7 +368,7 @@ class FuzzResult(FuzzItem):
 
     def __str__(self):
         fuzz_result = '%05d:  C=%03d   %4d L\t   %5d W\t  %5d Ch\t  "%s"\t "%s"' % (
-            self.result_number,
+            self.result_id,
             self.code,
             self.lines,
             self.words,

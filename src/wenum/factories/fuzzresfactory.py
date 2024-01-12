@@ -31,7 +31,7 @@ class FuzzResultDictioBuilder:
         fuzz_result.from_plugin = False
 
         SeedBuilderHelper.replace_markers(fuzz_result.history, fuzz_result.payload_man)
-        fuzz_result.result_number = next(FuzzResult.newid)
+        fuzz_result.result_id = next(FuzzResult.newid)
 
         return fuzz_result
 
@@ -125,7 +125,7 @@ class FuzzResBackfeedBuilder:
             backfeed_fuzzresult.history.method = method
             # The plugin results of the response before are irrelevant for the new request and should be cleared
             backfeed_fuzzresult.plugins_res = []
-            backfeed_fuzzresult.result_number = next(FuzzResult.newid)
+            backfeed_fuzzresult.result_id = next(FuzzResult.newid)
             if custom_description:
                 backfeed_fuzzresult.rlevel_desc = custom_description
             else:

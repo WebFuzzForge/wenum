@@ -121,24 +121,24 @@ class JSON(BasePrinter):
             plugin_dict[plugin.name] = result
 
         res_entry = {
-            "result_number": fuzz_result.result_number,
+            "result_id": fuzz_result.result_id,
             "code": fuzz_result.code,
             "lines": fuzz_result.lines,
             "words": fuzz_result.words,
             "chars": fuzz_result.chars,
             "method": fuzz_result.history.method,
+            "request_body": post_data,
             "url": fuzz_result.url,
             "location": location,
-            "post_data": post_data,
             "server": server,
-            "description": fuzz_result.description,
-            "plugins": plugin_dict
+            "processing_info": plugin_dict,
         }
         self.result_list.append(res_entry)
         return self.result_list
 
     def print_to_file(self):
-        self.outputfile_handle.write(json.dumps(self.result_list))
+        self.outputfile_handle.write(json.dumps([{"responses": self.result_list,
+                                                 "meta_plugins": [], "runtime_stats": []}]))
         self.outputfile_handle.flush()
         # Resetting the file pointer so that the next file write overwrites the content
         self.outputfile_handle.seek(0)
