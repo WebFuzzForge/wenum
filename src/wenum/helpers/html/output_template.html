@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Additional icon fonts. Wunderbaum uses bootstrap icons by default. -->
+    <link
+      rel="stylesheet"
+      href="file:////bootstrap-icons-1.11.3/font/bootstrap-icons.css"
+    />
+    <!-- Wunderbaum CSS and Library -->
+    <link
+      rel="stylesheet"
+      href="file:////wunderbaum-0.7.0/dist/wunderbaum.css"
+    />
+    <script
+      defer
+      src="file:////wunderbaum-0.7.0/dist/wunderbaum.umd.min.js"
+    ></script>
+  </head>
+
+  <body>
+    <div id="wenum-tree" class="wb-skeleton wb-initializing wb-fade-expander"></div>
+
+
+    <script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+
+        let jsonfile;
+
+        fetch('http://127.0.0.1:9999/wenum.json')
+        .then(response => response.text())
+        .then((data) => {
+            jsonfile = JSON.parse(data);
+            console.log("Da");
+            console.log(jsonfile);
+            console.log(typeof jsonfile);
+
+const tree = new mar10.Wunderbaum({
+  element: document.getElementById("wenum-tree"),
+  source: {
+    children: jsonfile.responses,
+//  "_keyMap": {"title": "t", "author": "k", "type": "y", "children": "c", "expanded": "e"}, },
+    "_keyMap": {}},
+  init: (e) => {
+    e.tree.setFocus();
+  },
+  render: function (e) {
+// console.log(e.type, e.isNew, e);
+const node = e.node;
+// const util = e.util;
+
+for (const col of Object.values(e.renderColInfosById)) {
+switch (col.id) {
+default:
+  // Assumption: we named column.id === node.data.NAME
+  col.elem.textContent = node.data[col.id];
+  break;
+}
+}
+},
+  columns: [
+    { id: "*", title: "URL", width: "250px" },
+    { id: "code", title: "Status Code", width: 1, minWidth: "100px" },
+    { id: "lines", title: "Lines", width: "50px", classes: "wb-helper-end" },
+    { id: "words", title: "Words", width: "50px", classes: "wb-helper-end" },
+    { id: "bytes", title: "Bytes", width: "80px", classes: "wb-helper-end", },
+  ],
+  activate: (e) => {
+    console.log(`Thank you for activating ${e.node}.`);
+  },
+});
+
+        });
+
+      });
+      </script>
+
+
+  </body>
+</html>
