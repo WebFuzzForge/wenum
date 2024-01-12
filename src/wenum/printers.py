@@ -4,7 +4,7 @@ import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wenum.fuzzobjects import FuzzResult, FuzzStats
+    from wenum.fuzzobjects import FuzzResponse, FuzzStats
 import json
 from .exception import FuzzExceptPluginError
 import sys
@@ -46,7 +46,7 @@ class BasePrinter(ABC):
         raise FuzzExceptPluginError("Method footer not implemented")
 
     @abstractmethod
-    def update_results(self, fuzz_result: FuzzResult, stats: FuzzStats):
+    def update_results(self, fuzz_result: FuzzResponse, stats: FuzzStats):
         """
         Update the result list during runtime. This does not print to file yet
         """
@@ -88,7 +88,7 @@ class JSON(BasePrinter):
         # Empty JSON header to avoid messing up the file structure
         pass
 
-    def update_results(self, fuzz_result: FuzzResult, stats: FuzzStats):
+    def update_results(self, fuzz_result: FuzzResponse, stats: FuzzStats):
         location = ""
         if fuzz_result.history.redirect_header:
             location = fuzz_result.history.full_redirect_url
@@ -122,24 +122,30 @@ class JSON(BasePrinter):
             plugin_dict[plugin.name].append(result)
 
         res_entry = {
-            "result_id": fuzz_result.result_id,
+            "id": fuzz_result.id,
+            "url": fuzz_result.url,
+            "method": fuzz_result.history.method,
+            "req_body": post_data,
             "code": fuzz_result.code,
             "lines": fuzz_result.lines,
             "words": fuzz_result.words,
-            "chars": fuzz_result.chars,
-            "method": fuzz_result.history.method,
-            "request_body": post_data,
-            "url": fuzz_result.url,
+            "bytes": fuzz_result.chars,
             "location": location,
             "server": server,
-            "processing_info": plugin_dict,
+            "info": plugin_dict,
         }
         self.result_list.append(res_entry)
         return self.result_list
 
     def print_to_file(self):
-        self.outputfile_handle.write(json.dumps({"responses": self.result_list,
-                                                 "meta_plugins": [], "runtime_stats": []}))
+        self.outputfile_handle.write(json.dumps(
+            {"responses": self.result_list,
+             #TODO Find more suitable name before utilizing meta-plugin output. This is dedicated for info coming
+             # from the execution of meta-plugins
+             # (metaplugins being plugins that do not run per-response but rather once per runtime)
+             # "meta_plugins": [],
+             "runtime_stats": []}
+        ))
         self.outputfile_handle.flush()
         # Resetting the file pointer so that the next file write overwrites the content
         self.outputfile_handle.seek(0)

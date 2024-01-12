@@ -6,7 +6,7 @@ from wenum.filters.base_filter import BaseFilter
 
 if TYPE_CHECKING:
     from wenum.facade import Facade, ERROR_CODE
-    from wenum.fuzzobjects import FuzzResult
+    from wenum.fuzzobjects import FuzzResponse
 
 from ..exception import FuzzExceptIncorrectFilter, FuzzExceptBadOptions
 from ..helpers.obj_dyn import (
@@ -100,7 +100,7 @@ class FuzzResFilter(BaseFilter):
         nested_definition.setParseAction(self.__compute_formula)
         self.finalformula.setParseAction(self.__myreduce)
 
-        self.fuzz_result: TypingOptional[FuzzResult] = None
+        self.fuzz_result: TypingOptional[FuzzResponse] = None
         self.stack = []
         self._cache = collections.defaultdict(set)
 

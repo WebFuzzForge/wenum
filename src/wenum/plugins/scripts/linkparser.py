@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wenum.fuzzobjects import FuzzResult
+    from wenum.fuzzobjects import FuzzResponse
 import os
 from urllib.parse import urlparse, urljoin
 import pathlib
@@ -36,7 +36,7 @@ class Linkparser(BasePlugin):
     def validate(self, fuzz_result):
         return fuzz_result.code in valid_codes
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         endpoints = linkfinder.parser_file(fuzz_result.content, linkfinder.regex_str, 0, None)
         if not endpoints:
             return

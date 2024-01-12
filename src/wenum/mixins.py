@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wenum.fuzzobjects import FuzzResult
+    from wenum.fuzzobjects import FuzzResponse
 from .plugin_api.urlutils import parse_url
 import socket
 import itertools

@@ -5,7 +5,7 @@ from collections import defaultdict
 from typing import Optional
 
 from wenum.externals.reqresp.CachedResponse import CachedResponse
-from wenum.fuzzobjects import FuzzResult, FuzzType
+from wenum.fuzzobjects import FuzzResponse, FuzzType
 
 
 class HttpCache:
@@ -43,7 +43,7 @@ class HttpCache:
             self.__cache_map[url_key].append(cache_type)
         return cached
 
-    def get_object_from_object_cache(self, fuzz_result: FuzzResult, key=False) -> Optional[FuzzResult]:
+    def get_object_from_object_cache(self, fuzz_result: FuzzResponse, key=False) -> Optional[FuzzResponse]:
         """
         Return entry in object_cache based on fuzzresult or key if provided (function for --cache-file option)
         """
@@ -68,7 +68,7 @@ class HttpCache:
         with open(cache_file, "rb") as cache_data:
             self.__cache_dir_map = json.load(cache_data)
 
-    def _fuzz_result_from_cache(self, key: str, fuzz_result: FuzzResult) -> FuzzResult | None:
+    def _fuzz_result_from_cache(self, key: str, fuzz_result: FuzzResponse) -> FuzzResponse | None:
         if key not in self.__cache_dir_map:
             return None
         cached = self.__cache_dir_map[key]

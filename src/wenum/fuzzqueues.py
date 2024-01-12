@@ -22,7 +22,7 @@ from wenum.externals.reqresp.Response import get_encoding_from_headers
 from .factories.fuzzresfactory import resfactory
 from .factories.plugin_factory import plugin_factory
 from .helpers.obj_dic import FixSizeOrderedDict
-from .fuzzobjects import FuzzType, FuzzItem, FuzzWord, FuzzWordType, FuzzResult, FuzzPlugin
+from .fuzzobjects import FuzzType, FuzzItem, FuzzWord, FuzzWordType, FuzzResponse, FuzzPlugin
 from .myqueues import FuzzQueue, FuzzListQueue
 from .exception import (
     FuzzExceptInternalError,
@@ -60,7 +60,7 @@ class SeedQueue(FuzzQueue):
             self.queue_out.receive_seed_queue.wait()
             self.queue_out.put(item)
 
-    def restart(self, seed: FuzzResult):
+    def restart(self, seed: FuzzResponse):
         """
         Assign the next seed that should be currently processed
         """
@@ -85,7 +85,7 @@ class SeedQueue(FuzzQueue):
         else:
             self.send_dictionary()
 
-    def get_fuzz_res(self, dictio_item: tuple) -> FuzzResult:
+    def get_fuzz_res(self, dictio_item: tuple) -> FuzzResponse:
         """
         Create FuzzResult object from FuzzWord
         """
@@ -172,7 +172,7 @@ class CLIPrinterQueue(FuzzQueue):
         if not self.session.options.quiet:
             self.cli.live.stop()
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         self.pause.wait()
         if fuzz_result.item_type == FuzzType.MESSAGE:
             self.session.console.print(fuzz_result.rlevel_desc)
@@ -210,7 +210,7 @@ class FilePrinterQueue(FuzzQueue):
         for printer in self.printer_list:
             printer.print_to_file()
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         if not fuzz_result.discarded:
             for printer in self.printer_list:
                 printer.update_results(fuzz_result, self.stats)
@@ -240,7 +240,7 @@ class RoutingQueue(FuzzQueue):
     def items_to_process(self):
         return [FuzzType.SEED, FuzzType.BACKFEED]
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         if fuzz_result.item_type == FuzzType.SEED:
             priority_level = self.session.assign_next_priority_level()
             # New seeds get less priority. This way an order of execution is maintained, whereas
@@ -271,7 +271,7 @@ class FilterQueue(FuzzQueue):
     def get_name(self):
         return "FilterQueue"
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
 
         if self.ffilter.is_filtered(fuzz_result):
             self.discard(fuzz_result)
@@ -296,7 +296,7 @@ class AutofilterQueue(FuzzQueue):
     def get_name(self):
         return "AutofilterQueue"
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
 
         # Successful HEAD requests should not be subject to getting autofiltered, and neither should errored requests
         if (fuzz_result.history.method == "HEAD" and fuzz_result.code == 200) or fuzz_result.code == ERROR_CODE:
@@ -310,7 +310,7 @@ class AutofilterQueue(FuzzQueue):
         else:
             self.discard(fuzz_result)
 
-    def update_response_tracker(self, fuzz_result: FuzzResult):
+    def update_response_tracker(self, fuzz_result: FuzzResponse):
         """
         Update the path's dict of how often a response has been seen
         """
@@ -331,7 +331,7 @@ class AutofilterQueue(FuzzQueue):
         except KeyError:
             self.response_tracker_dict[response_identifier] = 1
 
-    def update_filter(self, fuzz_result: FuzzResult, identifier: str):
+    def update_filter(self, fuzz_result: FuzzResponse, identifier: str):
         """
         Update the filter with the identifier of the response
         """
@@ -374,7 +374,7 @@ class PluginQueue(FuzzListQueue):
     def get_name(self):
         return "PluginQueue"
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         self.send_to_any(fuzz_result)
 
 
@@ -404,7 +404,7 @@ class PluginExecutor(FuzzQueue):
         with self.condition:
             self.condition.notify()
 
-    def process(self, fuzz_result: FuzzResult) -> None:
+    def process(self, fuzz_result: FuzzResponse) -> None:
         """
         Executes all the selected plugins for the fuzz result
         """
@@ -471,7 +471,7 @@ class PluginExecutor(FuzzQueue):
         else:
             return True
 
-    def process_results(self, fuzz_result: FuzzResult, plugins_res_queue: Queue,
+    def process_results(self, fuzz_result: FuzzResponse, plugins_res_queue: Queue,
                         queued_dict: dict) -> None:
         """
         Plugin results are polled from plugins_res_queue. Every plugin gets processed. Information gets appended
@@ -585,7 +585,7 @@ class RedirectQueue(FuzzQueue):
     def get_name(self):
         return "RedirectQueue"
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         if not 300 <= fuzz_result.code < 400:
             self.send(fuzz_result)
             return
@@ -617,8 +617,8 @@ class RedirectQueue(FuzzQueue):
                 method = "HEAD"
             else:
                 method = "GET"
-            backfeed: FuzzResult = resfactory.create("fuzzres_from_fuzzres", fuzz_result,
-                                                     target_url, method, from_plugin)
+            backfeed: FuzzResponse = resfactory.create("fuzzres_from_fuzzres", fuzz_result,
+                                                       target_url, method, from_plugin)
             fuzz_result.plugins_res.append(plugin_factory.create(
                 "plugin_from_finding", name=self.get_name(),
                 message=f"Added a request to [u]follow redirection[/u]", severity=FuzzPlugin.INFO))
@@ -643,7 +643,7 @@ class RecursiveQueue(FuzzQueue):
     def get_name(self):
         return "RecursiveQueue"
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         # If it is not a directory, no recursion will be queued
         if not fuzz_result.history.request_found_directory():
             self.send(fuzz_result)
@@ -651,7 +651,7 @@ class RecursiveQueue(FuzzQueue):
         recursion_url = fuzz_result.history.parse_recursion_url()
         max_recursion_condition = self.max_recursion_condition(fuzz_result)
 
-        seed: FuzzResult = resfactory.create("seed_from_recursion", fuzz_result)
+        seed: FuzzResponse = resfactory.create("seed_from_recursion", fuzz_result)
 
         # If it's cached already, don't throw it. No reason to log it, may spam the output too much,
         # and another seed was thrown anyway.
@@ -689,7 +689,7 @@ class RecursiveQueue(FuzzQueue):
         # Sends the current request into the next queue
         self.send(fuzz_result)
 
-    def max_recursion_condition(self, fuzz_result: FuzzResult) -> str:
+    def max_recursion_condition(self, fuzz_result: FuzzResponse) -> str:
         """
         Method to check whether max recursions are reached. If it is a backfed object (hence coming from a plugin), it
         should be checked against its plugin_rlevel. If it comes from the core, the ordinary rlevel should be checked.
@@ -704,7 +704,7 @@ class RecursiveQueue(FuzzQueue):
             return ""
 
     @staticmethod
-    def false_positive_hit(seed: FuzzResult, session: FuzzSession, logger: logging.Logger) -> bool:
+    def false_positive_hit(seed: FuzzResponse, session: FuzzSession, logger: logging.Logger) -> bool:
         """
         Checks whether server responds with something that looks like a hit an endpoint that does not exist,
         based on the URL of the FuzzResult
@@ -790,7 +790,7 @@ class DryRunQueue(FuzzQueue):
     def get_name(self):
         return "DryRunQueue"
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         self.send(fuzz_result)
 
 
@@ -855,7 +855,7 @@ class HttpQueue(FuzzQueue):
     def items_to_process(self):
         return [FuzzType.RESULT, FuzzType.BACKFEED]
 
-    def process(self, fuzz_result: FuzzResult):
+    def process(self, fuzz_result: FuzzResponse):
         # Don't process as long as pause Event is set
         self.pause.wait()
         # SeedQueue clears the event and waits for unblock if it sees too many items in HttpQueue queued.

@@ -129,7 +129,7 @@ class FuzzStats:
             "Total time": time.time() - self.starttime,
         }
 
-    def update_subdirectory_hits(self, fuzz_result: FuzzResult) -> None:
+    def update_subdirectory_hits(self, fuzz_result: FuzzResponse) -> None:
         """Update the amount of times a valid response has been found within a subdirectory.
         E.g. /admin/scripts/login.html will trigger a hitcount for /admin/ and /admin/scripts/"""
         request_path = fuzz_result.history.path
@@ -230,7 +230,7 @@ class FuzzPayload:
             return ""
 
         # return default value
-        if isinstance(self.content, FuzzResult):
+        if isinstance(self.content, FuzzResponse):
             return self.content.url
 
         return self.value
@@ -312,7 +312,13 @@ class FuzzError(FuzzItem):
         self.exception = exception
 
 
-class FuzzResult(FuzzItem):
+class FuzzResponse(FuzzItem):
+    """
+    Class tracking meta-information about the HTTP Response
+    (e.g. post processing information)
+    """
+    #TODO FuzzItems have a counter too and since no chronology is upheld with the IDs, this can be phased out and
+    # every object can access the FuzzItem ID instead
     newid = itertools.count(0)
 
     def __init__(self, history=None, exception=None):
@@ -321,12 +327,11 @@ class FuzzResult(FuzzItem):
 
         self.exception = exception
         self.rlevel_desc: str = ""
-        self.result_id: int = next(FuzzResult.newid)
+        self.id: int = next(FuzzResponse.newid)
 
         self.chars: int = 0
         self.lines: int = 0
         self.words: int = 0
-        self.md5: str = ""
 
         self.update()
 
@@ -351,7 +356,6 @@ class FuzzResult(FuzzItem):
         if self.history and self.history.content:
             m = hashlib.md5()
             m.update(convert_to_unicode(self.history.content))
-            self.md5 = m.hexdigest()
 
             self.chars = len(self.history.content)
             self.lines = self.history.content.count("\n")
@@ -359,7 +363,6 @@ class FuzzResult(FuzzItem):
         # Explicitly resetting these. As recursive requests are copies from the prior FuzzResult object,
         # this otherwise may retain the data from the previous result
         else:
-            self.md5 = ""
             self.chars = 0
             self.lines = 0
             self.words = 0
@@ -368,7 +371,7 @@ class FuzzResult(FuzzItem):
 
     def __str__(self):
         fuzz_result = '%05d:  C=%03d   %4d L\t   %5d W\t  %5d Ch\t  "%s"\t "%s"' % (
-            self.result_id,
+            self.id,
             self.code,
             self.lines,
             self.words,
@@ -441,7 +444,7 @@ class FuzzPlugin(FuzzItem):
         self.severity = self.INFO
         self.message = ""
         self.exception = None
-        self.seed: Optional[FuzzResult] = None
+        self.seed: Optional[FuzzResponse] = None
 
     def is_visible(self) -> bool:
         """

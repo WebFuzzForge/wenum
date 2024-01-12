@@ -9,7 +9,7 @@ from .exception import (
 
 from .factories.fuzzresfactory import resfactory
 from .factories.dictfactory import dictionary_factory
-from .fuzzobjects import FuzzStats, FuzzResult
+from .fuzzobjects import FuzzStats, FuzzResponse
 from .filters.complexfilter import FuzzResFilter
 from .filters.simplefilter import FuzzResSimpleFilter
 
@@ -37,7 +37,7 @@ class FuzzSession:
         self.compiled_stats: Optional[FuzzStats] = None
         self.compiled_filter: Optional[FuzzResFilter] = None
         self.compiled_simple_filter: Optional[FuzzResSimpleFilter] = None
-        self.compiled_seed: Optional[FuzzResult] = None
+        self.compiled_seed: Optional[FuzzResponse] = None
         self.compiled_printer_list: list[BasePrinter] = []
         self.compiled_iterator: Optional[BaseIterator] = None
         self.current_priority_level: int = PRIORITY_STEP

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from wenum.runtime_session import FuzzSession
     from queue import Queue
-from wenum.fuzzobjects import FuzzPlugin, FuzzResult
+from wenum.fuzzobjects import FuzzPlugin, FuzzResponse
 from wenum.exception import (
     FuzzExceptBadOptions,
     FuzzExceptPluginError,
@@ -32,7 +32,7 @@ class BasePlugin:
         # Bool indicating whether plugin should only be run once. PluginExecutor will disable after first execution
         self.run_once = False
         # Plugins might adjust the FuzzResult object passed into them. This contains the original state
-        self.base_fuzz_res: Optional[FuzzResult] = None
+        self.base_fuzz_res: Optional[FuzzResponse] = None
         self.cache = HttpCache()
         self.interrupt: Optional[Event] = None
         self.session: FuzzSession = session
@@ -50,7 +50,7 @@ class BasePlugin:
             if param_name not in list(self.kbase.keys()):
                 self.kbase[param_name] = default_value
 
-    def run(self, fuzz_result: FuzzResult, plugin_finished: Event, condition: Condition, interrupt_signal: Event, results_queue: Queue) -> None:
+    def run(self, fuzz_result: FuzzResponse, plugin_finished: Event, condition: Condition, interrupt_signal: Event, results_queue: Queue) -> None:
         """
         Will be triggered by PluginExecutor
         """
@@ -71,7 +71,7 @@ class BasePlugin:
             return
 
     @abstractmethod
-    def process(self, fuzz_result: FuzzResult) -> None:
+    def process(self, fuzz_result: FuzzResponse) -> None:
         """
         This is where the plugin processing is done. Any wenum plugin must implement this method
 
@@ -81,7 +81,7 @@ class BasePlugin:
         raise NotImplementedError
 
     @abstractmethod
-    def validate(self, fuzz_result: FuzzResult) -> bool:
+    def validate(self, fuzz_result: FuzzResponse) -> bool:
         """
         Function to poll whether the plugin should be executed for the current result.
         PluginExecutor skips the plugin if it does not validate

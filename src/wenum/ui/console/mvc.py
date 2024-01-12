@@ -9,7 +9,7 @@ from rich.text import Text
 
 from wenum.factories.fuzzresfactory import resfactory
 
-from wenum.fuzzobjects import FuzzWordType, FuzzResult, FuzzStats
+from wenum.fuzzobjects import FuzzWordType, FuzzResponse, FuzzStats
 from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
@@ -304,7 +304,7 @@ class View:
         """
         self.overall_progress.update(self.overall_task, total_req=stats.total_req, processed=stats.processed())
 
-    def update_filtered(self, fuzz_result: FuzzResult):
+    def update_filtered(self, fuzz_result: FuzzResponse):
         """
         Update the filtered bar's values with the provided discarded FuzzResult
         """
@@ -367,7 +367,7 @@ class View:
 
         self.console.print(grid)
 
-    def print_result(self, fuzz_result: FuzzResult) -> None:
+    def print_result(self, fuzz_result: FuzzResponse) -> None:
         """
         Prints the FuzzResult in its designated grid format
         """
@@ -414,10 +414,10 @@ class View:
                                     style="orange3" if color else "deep_pink3")
                 color = not color
 
-            self.console.rule(f"[dim]Response number {fuzz_result.result_id}:[/dim]", style="dim green")
+            self.console.rule(f"[dim]Response number {fuzz_result.id}:[/dim]", style="dim green")
             self.console.print(grid, plugin_grid, soft_wrap=True)
         else:
-            self.console.rule(f"[dim]Response number {fuzz_result.result_id}:[/dim]", style="dim green")
+            self.console.rule(f"[dim]Response number {fuzz_result.id}:[/dim]", style="dim green")
             self.console.print(grid, soft_wrap=True)
 
         # Add exception information

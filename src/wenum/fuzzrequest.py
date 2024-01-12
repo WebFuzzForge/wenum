@@ -130,6 +130,10 @@ class Params:
 
 
 class FuzzRequest(FuzzRequestUrlMixing):
+    """
+    Class tracking meta-information about the HTTP request that will be made
+    (e.g. amount of retries that have been made)
+    """
     def __init__(self):
         self._request: Request = Request()
 

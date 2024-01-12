@@ -1,6 +1,6 @@
 from ..helpers.obj_factory import ObjectFactory
 
-from ..fuzzobjects import FuzzPlugin, FuzzError, FuzzResult
+from ..fuzzobjects import FuzzPlugin, FuzzError, FuzzResponse
 from ..factories.fuzzresfactory import resfactory
 
 

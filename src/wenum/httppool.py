@@ -20,7 +20,7 @@ import datetime
 import pytz as pytz
 
 from .exception import FuzzExceptBadOptions, FuzzExceptNetError
-from .fuzzobjects import FuzzResult, FuzzItem, FuzzType
+from .fuzzobjects import FuzzResponse, FuzzItem, FuzzType
 
 from .factories.reqresp_factory import ReqRespRequestFactory
 
@@ -136,7 +136,7 @@ class HttpPool:
 
         return new_curl_h
 
-    def enqueue(self, fuzz_result: FuzzResult):
+    def enqueue(self, fuzz_result: FuzzResponse):
         """
         This method is called by HttpQueue. Puts a request object into request_queue, which is processed by a
         separate thread actually sending and receiving the requests.
@@ -227,7 +227,7 @@ class HttpPool:
         with self.mutex_stats:
             self.processed += 1
 
-    def _process_curl_determine_retry(self, fuzz_result: FuzzResult, errno: int) -> bool:
+    def _process_curl_determine_retry(self, fuzz_result: FuzzResponse, errno: int) -> bool:
         """
         Check if the request should be requeued and forward it accordingly.
 
@@ -243,7 +243,7 @@ class HttpPool:
         self.result_queue.put((self.base_result_priority, fuzz_result, requeue))
         return True
 
-    def _process_curl_handle_error(self, fuzz_result: FuzzResult, errno, errmsg):
+    def _process_curl_handle_error(self, fuzz_result: FuzzResponse, errno, errmsg):
         """
         Handle unrecoverable failed request
         """

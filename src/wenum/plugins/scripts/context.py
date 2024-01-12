@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wenum.fuzzobjects import FuzzResult
+    from wenum.fuzzobjects import FuzzResponse
 import os
 import pathlib
 from urllib.parse import urljoin, urlparse
@@ -52,7 +52,7 @@ class Context(BasePlugin):
         else:
             return True
 
-    def validate(self, fuzz_result: FuzzResult):
+    def validate(self, fuzz_result: FuzzResponse):
         # Don't process if filtered out
         if not self.check_filter_options(fuzz_result) or fuzz_result.code not in [403, 200, 401]:
             return False
