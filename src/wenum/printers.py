@@ -103,6 +103,7 @@ class JSON(BasePrinter):
         plugin_dict = {}
 
         for plugin in fuzz_result.plugins_res:
+            plugin_dict.setdefault(plugin.name, [])
             # Removing ansi color escapes when logging, which plugins may
             # have inserted (magic from https://stackoverflow.com/a/14693789)
             # 7-bit C1 ANSI sequences
@@ -118,7 +119,7 @@ class JSON(BasePrinter):
                 )
             """, re.VERBOSE)
             result = ansi_escape.sub('', plugin.message)
-            plugin_dict[plugin.name] = result
+            plugin_dict[plugin.name].append(result)
 
         res_entry = {
             "result_id": fuzz_result.result_id,
