@@ -132,7 +132,7 @@ class JSON(BasePrinter):
             "bytes": fuzz_result.chars,
             "location": location,
             "server": server,
-            "info": plugin_dict,
+            "misc": plugin_dict,
         }
         self.result_list.append(res_entry)
         return self.result_list
