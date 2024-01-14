@@ -2,6 +2,7 @@
 <html>
 
   <head>
+    <!-- TODO Include these files in the local file to ensure no internet connection is necessary for using the HTML report-->
     <!-- Additional icon fonts. Wunderbaum uses bootstrap icons by default. -->
     <link
       rel="stylesheet"
@@ -20,52 +21,117 @@
 
   <body>
 
+    <input type="file" id="wenum-file" name="wenum-file" accept=".json, text/plain, application/json", onChange="handleFile(this.files[0])" />
+
     <div id="wenum-tree" class="wb-skeleton wb-initializing wb-fade-expander"></div>
 
     <script>
-        //Next: Have the user upload the JSON instead of getting from local server
-        document.addEventListener("DOMContentLoaded", (event) => {
 
-            let jsonfile;
+        async function handleFile(file) {
+            let wenum_output = await (new Response(file)).text();
+            console.log(wenum_output);
+            jsonfile = JSON.parse(wenum_output);
 
-            fetch('http://127.0.0.1:9999/wenum.json')
-            .then(response => response.text())
-            .then((data) => {
-                jsonfile = JSON.parse(data);
+            console.log(jsonfile);
+            let new_json = [];
 
-                const tree = new mar10.Wunderbaum({
-                    element: document.getElementById("wenum-tree"),
-                    source: {
-                        children: jsonfile.responses,
-                            "_keyMap": {"title": "url"}},
-                    init: (e) => {
-                        e.tree.setFocus();
-                    },
-                    render: function (e) {
-                        const node = e.node;
+            for (response of jsonfile.responses) {
+                const url = new URL(response.url);
+                const hostname = url.hostname;
+                let port;
+                if (url.port.length > 0) {
+                    port = url.port;
+                }
+                else {
+                    if (url.protocol === "https:") {
+                        port = 443;
+                    }
+                    else if (url.protocol === "http:") {
+                        port = 80;
+                    }
+                    // Undefined
+                    else {
+                        port = 0;
+                    }
+                }
+                let host_index;
+                let port_index;
 
-                        for (const col of Object.values(e.renderColInfosById)) {
-                            switch (col.id) {
-                                default:
-                                    // Assumption: we named column.id === node.data.NAME
-                                    col.elem.textContent = node.data[col.id];
-                                    break;
-                            }
+                // Check if an entry with the hostname already exists
+                for (index in new_json) {
+                    if (new_json[index].title === hostname) {
+                        host_index = index;
+                        break;
+                    }
+                }
+                // If it doesnt exist, add such an entry to the array
+                if (host_index === undefined) {
+                    new_json.push({"title": hostname, "expanded": true});
+                    host_index = new_json.length - 1;
+                }
+                if (new_json[host_index].children === undefined) {
+                    new_json[host_index].children = [];
+                }
+                let port_array = new_json[host_index].children;
+
+                // Check for port entry of hostname entry
+                for (index in port_array) {
+                    if (port_array[index].title === port) {
+                        port_index = index;
+                        break;
+                    }
+                }
+                if (port_index === undefined) {
+                    new_json[host_index].children.push({"title": port, "expanded": true});
+                    port_index = new_json[host_index].children.length - 1;
+                }
+
+                if (new_json[host_index].children[port_index].children === undefined) {
+                    new_json[host_index].children[port_index].children = [];
+                }
+
+
+                // Remove this and continue hierarchy based on path instead
+                new_json[host_index].children[port_index].children.push(response);
+
+                split_path = url.pathname.split('/');
+                console.log(split_path);
+
+                console.log(response);
+            }
+
+            const tree = new mar10.Wunderbaum({
+                element: document.getElementById("wenum-tree"),
+                source: {
+                    children: new_json,
+                        "_keyMap": {"title": "url"}},
+                init: (e) => {
+                    e.tree.setFocus();
+                },
+                render: function (e) {
+                    const node = e.node;
+
+                    for (const col of Object.values(e.renderColInfosById)) {
+                        switch (col.id) {
+                            default:
+                                // Assumption: we named column.id === node.data.NAME
+                                col.elem.textContent = node.data[col.id];
+                                break;
                         }
-                    },
-                    columns: [
-                        { id: "*", title: "URL", width: "250px" },
-                        { id: "code", title: "Status Code", width: 1, minWidth: "100px" },
-                        { id: "lines", title: "Lines", width: "50px", classes: "wb-helper-end" },
-                        { id: "words", title: "Words", width: "50px", classes: "wb-helper-end" },
-                        { id: "bytes", title: "Bytes", width: "80px", classes: "wb-helper-end", },
-                    ],
-                    activate: (e) => {
-                        console.log(`Thank you for activating ${e.node}.`);
-                    },
-                });
+                    }
+                },
+                columns: [
+                    { id: "*", title: "URL", width: "350px" },
+                    { id: "code", title: "Code", width: "50px", classes: "wb-helper-end" },
+                    { id: "lines", title: "Lines", width: "50px", classes: "wb-helper-end" },
+                    { id: "words", title: "Words", width: "50px", classes: "wb-helper-end" },
+                    { id: "bytes", title: "Bytes", width: "60px", classes: "wb-helper-end", },
+                ],
+                activate: (e) => {
+                    console.log(`Thank you for activating ${e.node}.`);
+                },
             });
-        });
+        }
     </script>
 
   </body>
