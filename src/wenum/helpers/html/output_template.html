@@ -58,7 +58,7 @@
                 let port_index;
 
                 // Check if an entry with the hostname already exists
-                for (index in new_json) {
+                for (var index = 0; index < new_json.length; index++) {
                     if (new_json[index].title === hostname) {
                         host_index = index;
                         break;
@@ -75,7 +75,7 @@
                 let port_array = new_json[host_index].children;
 
                 // Check for port entry of hostname entry
-                for (index in port_array) {
+                for (var index = 0; index < port_array.length; index++) {
                     if (port_array[index].title === port) {
                         port_index = index;
                         break;
@@ -92,19 +92,54 @@
 
 
                 // Remove this and continue hierarchy based on path instead
-                new_json[host_index].children[port_index].children.push(response);
+                //new_json[host_index].children[port_index].children.push(response);
 
+                // '/' -> ['', '']; '/test/admin/index.html' -> ['', 'test', 'admin', 'index.html']
                 split_path = url.pathname.split('/');
-                console.log(split_path);
+                // Replace empty fields with the base / instead
+                for (index in split_path) {
+                    if (split_path[index].length === 0) {
+                        split_path[index] = '/';
+                    }
+                }
 
-                console.log(response);
+                let current_level = new_json[host_index].children[port_index].children;
+                // The first index needs to be ignored in this loop due to how the iteration is handled
+                for (var index = 1; index < split_path.length; index++) {
+                    let child_index;
+                    // For the last iteration append the actual response
+                    if (index === (split_path.length - 1)) {
+                        response.title = split_path[index];
+                        current_level.push(response)
+                        break;
+                    }
+
+                    // Check if that child already exists
+                    for (var index = 0; index < current_level.length; index++) {
+                        if (current_level[index].title === split_path[index]) {
+                            child_index = index;
+                            break;
+                        }
+                    }
+                    if (child_index === undefined) {
+                        current_level.push({"title": split_path[index], "expanded": true});
+                        child_index = new_json[host_index].children.length - 1;
+                    }
+
+                    if (current_level[child_index].children === undefined) {
+                        current_level[child_index].children = [];
+                    }
+
+                    current_level = current_level[child_index].children;
+
+                }
             }
 
             const tree = new mar10.Wunderbaum({
                 element: document.getElementById("wenum-tree"),
                 source: {
                     children: new_json,
-                        "_keyMap": {"title": "url"}},
+                        "_keyMap": {}},
                 init: (e) => {
                     e.tree.setFocus();
                 },
@@ -121,11 +156,18 @@
                     }
                 },
                 columns: [
-                    { id: "*", title: "URL", width: "350px" },
+                    { id: "*", title: "Path", width: "350px" },
+                    { id: "id", title: "ID", width: "60px", classes: "wb-helper-end" },
+                    { id: "method", title: "Method", width: "70px", classes: "wb-helper-end" },
+                    { id: "req_body", title: "Request body", width: "100px", classes: "wb-helper-end" },
                     { id: "code", title: "Code", width: "50px", classes: "wb-helper-end" },
                     { id: "lines", title: "Lines", width: "50px", classes: "wb-helper-end" },
                     { id: "words", title: "Words", width: "50px", classes: "wb-helper-end" },
                     { id: "bytes", title: "Bytes", width: "60px", classes: "wb-helper-end", },
+                    { id: "url", title: "URL", width: "200px", classes: "wb-helper-end", },
+                    { id: "location", title: "Location header", width: "200px", classes: "wb-helper-end", },
+                    { id: "server", title: "Server header", width: "200px", classes: "wb-helper-end", },
+                    { id: "misc", title: "Misc", width: "200px", classes: "wb-helper-end", },
                 ],
                 activate: (e) => {
                     console.log(`Thank you for activating ${e.node}.`);
