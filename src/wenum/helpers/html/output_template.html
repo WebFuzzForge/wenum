@@ -2,6 +2,7 @@
 <html>
 
   <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!-- TODO Include these files in the local file to ensure no internet connection is necessary for using the HTML report-->
     <!-- Additional icon fonts. Wunderbaum uses bootstrap icons by default. -->
     <link
@@ -13,17 +14,32 @@
       rel="stylesheet"
       href="file:////wunderbaum-0.7.0/dist/wunderbaum.css"
     />
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+
     <script
       defer
       src="file:////wunderbaum-0.7.0/dist/wunderbaum.umd.min.js"
     ></script>
   </head>
 
-  <body>
+  <body style="background-color: #232D3F">
 
-    <input type="file" id="wenum-file" name="wenum-file" accept=".json, text/plain, application/json", onChange="handleFile(this.files[0])" />
+    <h1 style="text-align: center; color: #008170">Wenum-report</h1>
+    <br>
 
-    <div id="wenum-tree" class="wb-skeleton wb-initializing wb-fade-expander"></div>
+    <!-- Add global runtime options in expandable info box-->
+
+    <button type="button" class="btn btn-sm btn-danger example-popover" data-toggle="popover" title="Popover title" data-content="And here's some amazing content. It's very engaging. Right?">Click</button>
+
+    <br>
+
+    <input type="file" id="wenum-file" name="wenum-file" accept=".json, text/plain, application/json" onChange="handleFile(this.files[0])" />
+
+    <div id="wenum-tree" class="wb-skeleton wb-initializing wb-alternate"></div>
 
     <script>
 
@@ -94,6 +110,9 @@
                 // Remove this and continue hierarchy based on path instead
                 //new_json[host_index].children[port_index].children.push(response);
 
+                //TODO This eats endpoints that have query parameters ?sth=1 e.g. as the parameters will be ignored, and the
+                // base path will loop through and overwrite previous iterations
+
                 // '/' -> ['', '']; '/test/admin/index.html' -> ['', 'test', 'admin', 'index.html']
                 split_path = url.pathname.split('/');
                 // Replace empty fields with the base / instead
@@ -148,23 +167,64 @@
 
                     for (const col of Object.values(e.renderColInfosById)) {
                         switch (col.id) {
+                            case "url":
+                                if (e.isNew) {
+                                        // If the URL key is not empty, set to link
+                                        if (node.data[col.id] !== undefined) {
+                                            const real_url = node.data[col.id];
+                                            col.elem.innerHTML = `<a href="${node.data[col.id]}" target="_blank" rel="noopener noreferrer">Open</a>`;
+                                        }
+                                    }
+                                break;
+                            case "misc":
+                                if (e.isNew) {
+                                    if (node.data[col.id] !== undefined) {
+                                        console.log(node.data[col.id]);
+                                        col.elem.innerHTML = `<button type="button" class="p-0 btn btn-block wenum-popover" style="font-size: 0.95em;" data-trigger="focus" data-toggle="popover" data-placement="left" title="Misc information" data-content="And here's some amazing content. It's very engaging. Right?">ClickcliClickclicclickcjclcickcclickcjclcick</button>`
+                                    }
+                                }
+                                break;
+                            case "req_body":
+                                if (e.isNew) {
+                                    if ((node.data[col.id] !== "") && (node.data[col.id] !== undefined)) {
+                                        col.elem.innerHTML = `<button type="button" class="p-0 btn btn-block wenum-popover" style="font-size: 0.95em;" data-trigger="focus" data-toggle="popover" data-placement="bottom" title="Request body" data-content="${node.data[col.id]}">${node.data[col.id]}</button>`
+                                    }
+                                }
+                                break;
+                            case "location":
+                                if (e.isNew) {
+                                        // If the URL key is not empty, set to link
+                                        if (node.data[col.id] !== undefined) {
+                                            const real_url = node.data[col.id];
+                                            col.elem.innerHTML = `<a href="${node.data[col.id]}" target="_blank" rel="noopener noreferrer">${node.data[col.id]}</a>`;
+                                        }
+                                    }
+                                break;
                             default:
                                 // Assumption: we named column.id === node.data.NAME
-                                col.elem.textContent = node.data[col.id];
+                                //col.elem.textContent = node.data[col.id];
+                                //TODO Putting elements into html tags is not respected by wunderbaum, and therefore not sanitized
+                                // Doublequotes at least are not escpaed. Brackets are. The notedata value should be sanitized
+                                if (e.isNew) {
+                                    if (node.data[col.id] !== undefined) {
+                                        col.elem.innerHTML = `<div title="${node.data[col.id]}">${node.data[col.id]}</div>`
+                                    }
+                                }
                                 break;
                         }
+
                     }
                 },
                 columns: [
                     { id: "*", title: "Path", width: "350px" },
                     { id: "id", title: "ID", width: "60px", classes: "wb-helper-end" },
+                    { id: "url", title: "URL", width: "50px", classes: "wb-helper-end", },
                     { id: "method", title: "Method", width: "70px", classes: "wb-helper-end" },
                     { id: "req_body", title: "Request body", width: "100px", classes: "wb-helper-end" },
-                    { id: "code", title: "Code", width: "50px", classes: "wb-helper-end" },
+                    { id: "code", title: "Code", width: "40px", classes: "wb-helper-end" },
                     { id: "lines", title: "Lines", width: "50px", classes: "wb-helper-end" },
                     { id: "words", title: "Words", width: "50px", classes: "wb-helper-end" },
                     { id: "bytes", title: "Bytes", width: "60px", classes: "wb-helper-end", },
-                    { id: "url", title: "URL", width: "200px", classes: "wb-helper-end", },
                     { id: "location", title: "Location header", width: "200px", classes: "wb-helper-end", },
                     { id: "server", title: "Server header", width: "200px", classes: "wb-helper-end", },
                     { id: "misc", title: "Misc", width: "200px", classes: "wb-helper-end", },
@@ -173,8 +233,17 @@
                     console.log(`Thank you for activating ${e.node}.`);
                 },
             });
+
+        // Need to do this once reliably waited for the tree to have been built
+        console.log("activating");
+        $(function () {
+            $('[data-toggle="popover"]').popover()
+        });
+
+
         }
     </script>
+
 
   </body>
 

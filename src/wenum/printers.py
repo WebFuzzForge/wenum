@@ -20,6 +20,7 @@ class BasePrinter(ABC):
     - Ensure that the user has a valid output file even *during* the runtime, instead of an architecture where
       the file is only valid after the footer has been inserted at the end of a properly closed runtime
     """
+
     def __init__(self, output: str, verbose: bool):
         self.outputfile_handle = None
         # List containing every result information
@@ -95,10 +96,13 @@ class JSON(BasePrinter):
         server = ""
         if "Server" in fuzz_result.history.headers.response:
             server = fuzz_result.history.headers.response["Server"]
-        post_data = []
+        # TODO Post data should only be included here if it deviates from the globally set request body data
+        #  Additionally, req body data should not be considered an array, as key value format is only in some content
+        #  types and not applicable to the arbitrary nature of request bodies
+        post_data = ""
         if fuzz_result.history.method.lower() == "post":
             for n, v in list(fuzz_result.history.params.post.items()):
-                post_data.append({"parameter": n, "value": v})
+                post_data += "parameter " + n + ", value" + v
 
         plugin_dict = {}
 
@@ -140,7 +144,7 @@ class JSON(BasePrinter):
     def print_to_file(self):
         self.outputfile_handle.write(json.dumps(
             {"responses": self.result_list,
-             #TODO Find more suitable name before utilizing meta-plugin output. This is dedicated for info coming
+             # TODO Find more suitable name before utilizing meta-plugin output. This is dedicated for info coming
              # from the execution of meta-plugins
              # (metaplugins being plugins that do not run per-response but rather once per runtime)
              # "meta_plugins": [],
