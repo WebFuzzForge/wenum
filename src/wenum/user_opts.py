@@ -1,7 +1,9 @@
 import argparse
 import logging
+import pathlib
 import re
 import sys
+import webbrowser
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -66,6 +68,9 @@ class Options:
 
         self.output_format: Optional[str] = None
         self.opt_name_output_format = "output-format"
+
+        self.html: Optional[bool] = None
+        self.opt_name_html = "html"
 
         self.debug_log: Optional[str] = None
         self.opt_name_debug_log: str = "debug-log"
@@ -210,6 +215,9 @@ class Options:
         if parsed_args.output:
             self.output = parsed_args.output
 
+        if parsed_args.html:
+            self.html = parsed_args.html
+
         if parsed_args.debug_log:
             logger = logging.getLogger("debug_log")
             logger.propagate = False
@@ -321,6 +329,9 @@ class Options:
         if parsed_args.cache_dir:
             self.cache_dir = parsed_args.cache_dir
 
+        if parsed_args.version:
+            self.version = parsed_args.version
+
     def get_all_opts(self) -> list[tuple]:
         """
         Returns all option parameters in a list of tuples,
@@ -335,6 +346,7 @@ class Options:
             (self.opt_name_verbose, self.verbose),
             (self.opt_name_output, self.output),
             (self.opt_name_output_format, self.output_format),
+            (self.opt_name_html, self.html),
             (self.opt_name_debug_log, self.debug_log),
             (self.opt_name_proxy, self.proxy_list),
             (self.opt_name_threads, self.threads),
@@ -441,6 +453,9 @@ class Options:
 
         if self.opt_name_output_format in toml_dict:
             self.output_format = self.pop_toml_string(toml_dict, self.opt_name_output_format)
+
+        if self.opt_name_html in toml_dict:
+            self.html = self.pop_toml_bool(toml_dict, self.opt_name_html)
 
         if self.opt_name_debug_log in toml_dict:
             self.debug_log = self.pop_toml_string(toml_dict, self.opt_name_debug_log)
@@ -629,6 +644,11 @@ class Options:
             print(f"wenum version: {version}")
             sys.exit(0)
 
+        if self.html:
+            print(pathlib.Path(__file__).parent.resolve())
+            webbrowser.open(f"file://{pathlib.Path(__file__).parent.resolve()}/helpers/html/output_template.html")
+            sys.exit(0)
+
         if not self.threads:
             self.threads = default_threads
 
@@ -797,11 +817,15 @@ class Options:
                               help="Specify a wordlist file to iterate through.", nargs="*")
         io_group.add_argument("-o", f"--{self.opt_name_output}",
                               help="Store results in the specified output file.")
+        # TODO Remove the format argument, as the design will not utilize it? Alternatively, keep it for future
+        #  possibilities of formats?
         io_group.add_argument("-f", f"--{self.opt_name_output_format}",
                               help=f"Set the format of the output file. If you specify \"all\", each format will be "
                                    f"used as a suffix for the specified output path. "
                                    f"(default: {default_output_format})",
                               choices=valid_format_choices)
+        io_group.add_argument(f"--{self.opt_name_html}", action="store_true",
+                              help="Open the HTML report template.")
         io_group.add_argument("-l", f"--{self.opt_name_debug_log}",
                               help="Store runtime information in the specified file.")
         io_group.add_argument(f"--{self.opt_name_dump_config}",
