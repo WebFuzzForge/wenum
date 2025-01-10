@@ -376,17 +376,15 @@ class PluginQueue(FuzzListQueue):
     """
 
     def __init__(self, session: FuzzSession):
-        # Get active plugins
-        lplugins = [plugin(session) for plugin in Facade().scripts.get_plugins(session.options.plugins_list)]
-
-        if not lplugins:
+        # Check active plugins
+        if not [plugin(session) for plugin in Facade().scripts.get_plugins(session.options.plugins_list)]:
             raise FuzzExceptBadOptions(
                 "No plugin selected, check the --plugins option."
             )
 
         concurrent = session.options.plugin_threads
-        # Creating several PluginExecutors to enable several requests to be processed by plugins simultaneously
-        super().__init__(session, [PluginExecutor(session, lplugins) for i in range(concurrent)])
+        # Creating several PluginExecutors to enable several requests to be processed by plugins simultaneously. Dynamically instantiating the plugins to ensure that each PluginExecutor receives its unique objects and avoid any concurrency issues 
+        super().__init__(session, [PluginExecutor(session, [plugin(session) for plugin in Facade().scripts.get_plugins(session.options.plugins_list)]) for i in range(concurrent)])
 
     def get_name(self):
         return "PluginQueue"
