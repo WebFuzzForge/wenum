@@ -231,6 +231,9 @@ class Options:
         if parsed_args.threads:
             self.threads = parsed_args.threads
 
+        if parsed_args.plugin_threads:
+            self.plugin_threads = parsed_args.plugin_threads
+
         if parsed_args.sleep:
             self.sleep = parsed_args.sleep
 
