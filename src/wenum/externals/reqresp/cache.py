@@ -1,8 +1,12 @@
 import copy
+import datetime
 import json
 import os
 from collections import defaultdict
-from typing import Optional
+from datetime import timedelta
+from typing import Optional, List
+
+import dateutil.parser
 
 from wenum.externals.reqresp.CachedResponse import CachedResponse
 from wenum.fuzzobjects import FuzzResult, FuzzType
@@ -19,6 +23,10 @@ class HttpCache:
         # cache control, a dictionary with URLs as keys and their values being lists full of the
         # categories that the queries were categorized as
         self.__cache_map = defaultdict(list)
+        # @TODO make this configurable
+        self.status_200_age = datetime.datetime.now(datetime.UTC) - timedelta(days=7)
+        self.status_404_age = datetime.datetime.now(datetime.UTC) - timedelta(days=60)
+
         if cache_dir:
             self.load_cache_dir(cache_dir)
 
@@ -72,6 +80,15 @@ class HttpCache:
         if key not in self.__cache_dir_map:
             return None
         cached = self.__cache_dir_map[key]
+        if "time" in cached:
+            time = dateutil.parser.parse(cached["time"])
+            if 200 <= cached['status'] < 400:
+                if time < self.status_200_age:
+                    return None
+            elif 400 <= cached['status'] < 599:
+                if time < self.status_404_age:
+                    return None
+
         res_copy = copy.deepcopy(fuzz_result)
         res_copy.item_type = FuzzType.RESULT
 
@@ -89,3 +106,15 @@ class HttpCache:
         res_copy.history._request.response = response
 
         return res_copy
+
+    def cached_urls(self) -> List[str]:
+        """
+        Get a list of all cached URLs with status code < 400
+        :return:
+        """
+        if not self.cache_dir:
+            return []
+        for key, cached in self.__cache_dir_map.items():
+            if cached["status"] >= 400:
+                continue
+            yield key
